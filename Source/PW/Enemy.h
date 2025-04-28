@@ -1,10 +1,16 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Enemy.h
+
 #pragma once
+
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Components/WidgetComponent.h"
+
 #include "Enemy.generated.h"
 
 class AEnemySpawner;  // 전방 선언
+class UUserWidget;
+class UMySpeechBubbleWidget;
 
 UCLASS(Blueprintable)
 
@@ -16,11 +22,18 @@ public:
 	// Sets default values for this character's properties
 	AEnemy();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+	UWidgetComponent* SpeechBubbleWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
+	TArray<FText> DialogueLines;
+
+	UFUNCTION()
+	void ShowRandomDialogue();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
 
 public:
 	// Called every frame
@@ -91,11 +104,9 @@ protected:
 	// 액터 제거 함수
 	UFUNCTION()
 	void DestroyActor();
-	// Enemy.h에 추가
 
 public:
 	// 스포너 참조
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawning")
 	class AEnemySpawner* OwningSpawner;
-
 };
