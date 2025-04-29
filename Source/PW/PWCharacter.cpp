@@ -37,7 +37,7 @@ APWCharacter::APWCharacter()
 	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
 
 	// 기본 총구 오프셋 설정
-	MuzzleOffset = FVector(100.0f, 0.0f, 10.0f);
+	MuzzleOffset = FVector(100.0f, 0.0f, 50.0f);
 }
 
 void APWCharacter::BeginPlay()
