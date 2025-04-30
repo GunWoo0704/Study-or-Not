@@ -8,6 +8,7 @@
 #include "Components/WidgetComponent.h"
 #include "UMySpeechBubbleWidget.h" 
 #include "PWGameMode.h"
+#include "Sound/SoundBase.h"
 
 // Sets default values
 AEnemy::AEnemy()
@@ -20,13 +21,18 @@ AEnemy::AEnemy()
 
 	// 기본 타이머 시간 설정
 	MinTimeBetweenAnimations = 3.0f;
-	MaxTimeBetweenAnimations = 8.0f;
+	MaxTimeBetweenAnimations = 30.0f;
 
 	// 충돌 이벤트 등록
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &AEnemy::OnHit);
 
 	// 래그돌 후 제거 지연 시간 초기화
 	DestroyAfterRagdollDelay = 4.0f;
+
+	// 사운드 및 점수 페널티 초기화
+	RagdollSound = nullptr;
+	WrongHitSound = nullptr;
+	WrongHitScorePenalty = 5;
 
 	SpeechBubbleWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("SpeechBubble"));
 	SpeechBubbleWidget->SetupAttachment(GetMesh());
@@ -86,10 +92,37 @@ float AEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AC
 {
 	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	// 래그돌 조건이 활성화된 경우만 래그돌 처리
+	// 월드 객체 가져오기
+	UWorld* World = GetWorld();
+	if (!World) return ActualDamage;
+
+	// APWGameMode로 캐스트
+	APWGameMode* GameMode = Cast<APWGameMode>(World->GetAuthGameMode());
+	if (!GameMode) return ActualDamage;
+
+	// 래그돌 상태 확인 후 처리
 	if (bCanRagdoll)
 	{
+		// 래그돌 상태(특수 애니메이션 재생 중)에서는 정상적인 래그돌 처리
+		// EnableRagdoll() 안에서 이미 점수 추가 및 RagdollSound 재생을 처리함
 		EnableRagdoll();
+	}
+	else
+	{
+		// 래그돌 상태가 아닐 때 맞추면 점수 차감
+		GameMode->AddScore(-WrongHitScorePenalty);
+
+		// 잘못된 타이밍에 맞췄을 때의 사운드 재생
+		if (WrongHitSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(
+				this,
+				WrongHitSound,
+				GetActorLocation(),
+				1.0f,
+				1.0f
+			);
+		}
 	}
 
 	return ActualDamage;
@@ -104,8 +137,20 @@ void AEnemy::EnableRagdoll()
 		// APWGameMode로 캐스트해서 AddScore 호출
 		if (APWGameMode* GameMode = Cast<APWGameMode>(World->GetAuthGameMode()))
 		{
-			GameMode->AddScore(10);
+			GameMode->AddScore(20);
 		}
+	}
+
+	// 래그돌 사운드 재생
+	if (RagdollSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,           // 월드 컨텍스트 객체
+			RagdollSound,   // 재생할 사운드
+			GetActorLocation(), // 사운드 재생 위치
+			0.7f,           // 볼륨 배수
+			1.0f            // 피치 배수
+		);
 	}
 
 	// 래그돌 물리 활성화

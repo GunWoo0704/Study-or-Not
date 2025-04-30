@@ -31,10 +31,10 @@ void APWGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void APWGameMode::AddScore(int32 ScoreToAdd)
 {
-	if (ScoreToAdd <= 0)
+	/*if (ScoreToAdd <= 0)
 	{
 		return;
-	}
+	}*/
 
 	CurrentScore += ScoreToAdd;
 	UE_LOG(LogTemp, Warning, TEXT("Score increased by %d. New score: %d"), ScoreToAdd, CurrentScore);
